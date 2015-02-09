@@ -1,0 +1,3 @@
+[submodule "STModel-Data"]
+	path = STModel-Data
+	url = git@github.com:TheoreticalEcosystemEcology/STModel-Data.git
