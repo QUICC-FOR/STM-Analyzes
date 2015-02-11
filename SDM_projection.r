@@ -132,34 +132,29 @@ map <- ggplot(subset(df.pred,mod=='MN')) +
 ggsave(map,file="./figures/MN_proj_SDM.jpg",width=15,height=10)
 
 ################################################
-###### Explore SDM response to climate
+###### Explore SDMs responses to climate variables
 
 require(dplyr)
 
-desc_val<- stm_dat
+desc_val<- sdm_grid[,selectedVars]
 n <- 1000
 
-load('../data/Multinom_6vars_version_b.rObj')
-load('../data/RandomForest_7vars.rObj')
-
 out_ls <- list()
-
-require("randomForest")
-require("nnet")
 
 for (i in 1:ncol(desc_val)){
     var_test <- seq(min(desc_val[,i]),max(desc_val[,i]),length.out=n)
     vars_mean <- apply(desc_val,2,median)
     df <- data.frame(
         annual_mean_temp=rep(vars_mean[1],length(var_test)),
-        pp_seasonality=rep(vars_mean[2],length(var_test)),
-        pp_warmest_quarter=rep(vars_mean[3],length(var_test)),
-        mean_diurnal_range=rep(vars_mean[4],length(var_test)),
-        annual_pp=rep(vars_mean[5],length(var_test)),
-        mean_temperatre_wettest_quarter=rep(vars_mean[6],length(var_test)))
+        tot_annual_pp=rep(vars_mean[2],length(var_test)),
+        mean_diurnal_range=rep(vars_mean[3],length(var_test)),
+        pp_warmest_quarter=rep(vars_mean[4],length(var_test)),
+        pp_wettest_period=rep(vars_mean[5],length(var_test)),
+        mean_temp_wettest_quarter=rep(vars_mean[6],length(var_test)),
+        mean_temp_driest_quarter=rep(vars_mean[7],length(var_test)))
     df[,i] <- var_test
 
-    pred_multinom <- predict(SDM1.b,new=df,"prob")
+    pred_multinom <- predict(SDM1,new=df,"prob")
     df_multinom <- data.frame(model=rep("MN",nrow(pred_multinom)),var_test=rep(names(vars_mean)[i],nrow(pred_multinom)),value_var_test=var_test,pred_multinom)
     pred_RF <- predict(SDM2,new=df,"prob")
     df_RF <- data.frame(model=rep("RF",nrow(pred_multinom)),var_test=rep(names(vars_mean)[i],nrow(pred_multinom)),value_var_test=var_test,pred_RF)
@@ -171,11 +166,10 @@ for (i in 1:ncol(desc_val)){
 
 ggdata <- melt(do.call(rbind,out_ls),id=c("model","var_test","value_var_test"),value.name="probability",variable.name="state")
 
-require(ggplot2)
 ggplot(subset(ggdata,model=="MN"),aes(x=value_var_test,y=probability,colour=state)) + geom_line() + facet_wrap(~var_test,scales="free_x") + xlab("Var tested") + ylab("Probability")
-ggsave(file="../figures/MN_oneVar_test.jpg",width=12,height=8)
+ggsave(file="./figures/MN_oneVar_test.jpg",width=12,height=8)
 
 ggplot(subset(ggdata,model=="RF"),aes(x=value_var_test,y=probability,colour=state)) + geom_line() + facet_wrap(~var_test,scales="free_x") + xlab("Var tested") + ylab("Probability")
-ggsave(file="../figures/RF_oneVar_test.jpg",width=12,height=8)
+ggsave(file="./figures/RF_oneVar_test.jpg",width=12,height=8)
 
 
