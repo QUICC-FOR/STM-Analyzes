@@ -144,6 +144,8 @@ out_ls <- list()
 for (i in 1:ncol(desc_val)){
     var_test <- seq(min(desc_val[,i]),max(desc_val[,i]),length.out=n)
     vars_mean <- apply(desc_val,2,median)
+    var_test_name <-  names(desc_val)[i]
+
     df <- data.frame(
         annual_mean_temp=rep(vars_mean[1],length(var_test)),
         tot_annual_pp=rep(vars_mean[2],length(var_test)),
@@ -154,10 +156,15 @@ for (i in 1:ncol(desc_val)){
         mean_temp_driest_quarter=rep(vars_mean[7],length(var_test)))
     df[,i] <- var_test
 
+    var_test_unscaled <- var_test*vars.sd[var_test_name]+vars.means[var_test_name]
+
     pred_multinom <- predict(SDM1,new=df,"prob")
-    df_multinom <- data.frame(model=rep("MN",nrow(pred_multinom)),var_test=rep(names(vars_mean)[i],nrow(pred_multinom)),value_var_test=var_test,pred_multinom)
+
+    df_multinom <- data.frame(model=rep("MN",nrow(pred_multinom)),var_test=rep(names(vars_mean)[i],nrow(pred_multinom)),value_var_test=var_test_unscaled,pred_multinom)
+
     pred_RF <- predict(SDM2,new=df,"prob")
-    df_RF <- data.frame(model=rep("RF",nrow(pred_multinom)),var_test=rep(names(vars_mean)[i],nrow(pred_multinom)),value_var_test=var_test,pred_RF)
+
+    df_RF <- data.frame(model=rep("RF",nrow(pred_multinom)),var_test=rep(names(vars_mean)[i],nrow(pred_multinom)),value_var_test=var_test_unscaled,pred_RF)
 
     final_df <- rbind(df_multinom,df_RF)
 
@@ -166,10 +173,10 @@ for (i in 1:ncol(desc_val)){
 
 ggdata <- melt(do.call(rbind,out_ls),id=c("model","var_test","value_var_test"),value.name="probability",variable.name="state")
 
-ggplot(subset(ggdata,model=="MN"),aes(x=value_var_test,y=probability,colour=state)) + geom_line() + facet_wrap(~var_test,scales="free_x") + xlab("Var tested") + ylab("Probability")
-ggsave(file="./figures/MN_oneVar_test.jpg",width=12,height=8)
+resp_MN <- ggplot(subset(ggdata,model=="MN"),aes(x=value_var_test,y=probability,colour=state)) + geom_line() + facet_wrap(~var_test,scales="free_x") + xlab("Var tested") + ylab("Probability")
+ggsave(resp_MN,file="./figures/MN_oneVar_test.jpg",width=12,height=8)
 
-ggplot(subset(ggdata,model=="RF"),aes(x=value_var_test,y=probability,colour=state)) + geom_line() + facet_wrap(~var_test,scales="free_x") + xlab("Var tested") + ylab("Probability")
-ggsave(file="./figures/RF_oneVar_test.jpg",width=12,height=8)
+resp_RF <- ggplot(subset(ggdata,model=="RF"),aes(x=value_var_test,y=probability,colour=state)) + geom_line() + facet_wrap(~var_test,scales="free_x") + xlab("Var tested") + ylab("Probability")
+ggsave(resp_RF,file="./figures/RF_oneVar_test.jpg",width=12,height=8)
 
 
