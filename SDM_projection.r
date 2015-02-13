@@ -179,4 +179,6 @@ ggsave(resp_MN,file="./figures/MN_oneVar_test.jpg",width=12,height=8)
 resp_RF <- ggplot(subset(ggdata,model=="RF"),aes(x=value_var_test,y=probability,colour=state)) + geom_line() + facet_wrap(~var_test,scales="free_x") + xlab("Var tested") + ylab("Probability")
 ggsave(resp_RF,file="./figures/RF_oneVar_test.jpg",width=12,height=8)
 
-
+# for (i in 2:length(vars_mean)){
+#     vars_mean[i] <- vars_mean[i] * vars.sd[i] + vars.means[i]
+# }
