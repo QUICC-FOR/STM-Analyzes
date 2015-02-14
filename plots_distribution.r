@@ -4,6 +4,7 @@ require("sp")
 require("ggplot2")
 require("rgdal")
 require("RColorBrewer")
+require("reshape2")
 
 ## load data
 load("./STModel-Data/out_files/transitions_r1.rdata")
@@ -54,7 +55,7 @@ plots_distrib_allyr <- ggplot(df.count,aes(x=x,y=y,fill=class)) +
         coord_equal() +
         xlab("Longitude") + ylab("Latitude")
 
-ggsave(plots_distrib_allyr,file="./figures/distrib_plots_allyrs.jpg",width=8,height=10)
+ggsave(plots_distrib_allyr,file="./figures/distrib_plots_allyrs.jpg",width=8,height=6)
 
 ## Distribution plots by decades
 
@@ -69,15 +70,36 @@ plots_years <- plots_years[,c(1,2,4)]
 decades_count <- stack()
 
 for (i in 1:nlevels(plots_years$dec)){
-    i=1
-    spdf <- SpatialPoints(coords=plots_years[plots_years$dec == levels(plots_years$dec)[i],c(1,2)],proj4string = CRS("+proj=longlat +datum=WGS84 +no_defs"))
-    rast <- raster(nrow=75,ncol=75,extent(plots_coords))
+    dec_level <- levels(plots_years$dec)[i]
+    plots_dec <- subset(plots_years,dec == dec_level)[,1:2]
+    spdf <- SpatialPoints(coords=plots_dec,proj4string = CRS("+proj=longlat +datum=WGS84 +no_defs"))
+    rast <- raster(nrow=75,ncol=75,ext)
     rast <- rasterize(spdf,rast,fun='count')
-    decades_count <- addLayer(rast)
+    decades_count <- addLayer(decades_count,rast)
+    names(decades_count)[i] <- dec_level
 }
 
 
 # Create raster, count and return obj to df
 
-df.count <- as.data.frame(rast,xy=TRUE)[,c(1,2,6)]
+df.decades <- as.data.frame(decades_count,xy=TRUE)
+df.decades <- melt(df.decades,id=c("x","y"))
+df.decades$variable <- factor(df.decades$variable,labels=levels(plots_years$dec))
+names(df.decades)[3:4] <- c("dec","count")
+df.decades$count <- cut(df.decades$count ,c(1,10, 50, 100, 200, 300 ,400, 500, 800))
 
+
+plots_distrib_by_decades <- ggplot(df.decades,aes(x=x,y=y,fill=count)) +
+        facet_wrap(~dec)+
+        geom_polygon(data = df.countries, aes(x = long, y = lat, group = group),fill="grey80",colour="grey50",size=0.1) +
+        geom_raster(alpha=0.7) +
+        scale_fill_manual(values=cols,name="Count") +
+        geom_polygon(data = subset(df.lakes,hole==FALSE),
+            aes(x = long, y = lat, group = group),fill="lightskyblue",
+            colour="dodgerblue4",size=0.1) +
+        scale_x_continuous(expand=c(0,0))+
+        scale_y_continuous(expand=c(0,0))+
+        coord_equal() +
+        xlab("Longitude") + ylab("Latitude")
+
+ggsave(plots_distrib_by_decades,file="./figures/distrib_plots_by_decades.jpg",width=12,height=6)
