@@ -54,6 +54,7 @@ pred_multinom <- predict(SDM1,new=sdm_grid,"class")
 pred_multinom <- data.frame(sdm_grid[,c("lat","lon")],pred_multinom,mod=rep("MN",rep=nrow(pred_multinom)))
 pred_RF <- predict(SDM2,new=sdm_grid,"class")
 pred_RF <- data.frame(sdm_grid[,c("lat","lon")],pred_RF,mod=rep("RF",rep=nrow(pred_RF)))
+names(pred_multinom)[3] <- names(pred_RF)[3] <- "pred"
 pred <- rbind(pred_RF,pred_multinom)
 
 # Save class Projs
