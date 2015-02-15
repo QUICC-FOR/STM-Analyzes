@@ -48,7 +48,19 @@ for (i in 3:(ncol(sdm_grid))){
 }
 
 
-# Grid prediction and Reshaping
+# Class: Grid prediction and Reshaping
+
+pred_multinom <- predict(SDM1,new=sdm_grid,"class")
+pred_multinom <- data.frame(sdm_grid[,c("lat","lon")],pred_multinom,mod=rep("MN",rep=nrow(pred_multinom)))
+pred_RF <- predict(SDM2,new=sdm_grid,"class")
+pred_RF <- data.frame(sdm_grid[,c("lat","lon")],pred_RF,mod=rep("RF",rep=nrow(pred_RF)))
+pred <- rbind(pred_RF,pred_multinom)
+
+# Save class Projs
+save(pred,file="./data/class_sdm_proj.rdata")
+
+# Prob: Grid prediction and Reshaping
+
 pred_multinom <- predict(SDM1,new=sdm_grid,"prob")
 pred_multinom <- data.frame(sdm_grid[,c("lat","lon")],pred_multinom,mod=rep("MN",rep=nrow(pred_multinom)))
 pred_RF <- predict(SDM2,new=sdm_grid,"prob")
@@ -60,8 +72,8 @@ df.pred$mod <- as.factor(df.pred$mod)
 df.pred$prob <- cut(df.pred$prob,breaks=11)
 df.pred$prob <-factor(df.pred$prob ,levels=rev(levels(df.pred$prob)))
 
-# Save Projs
-save(pred,file="./data/sdm_proj.rdata")
+# Save prob Projs
+save(pred,file="./data/prob_sdm_proj.rdata")
 
 
 # Crop lakes and countries on the area
