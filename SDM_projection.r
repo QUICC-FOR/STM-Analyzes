@@ -2,7 +2,6 @@
 # Date: 9th February, 2014
 
 #SetWD
-
 setwd("/home/steve/Documents/GitHub/STModel-Analyzes/")
 
 ###### Load librairies
@@ -22,8 +21,15 @@ load('./STModel-Calibration/scripts/scale_info.Robj')
 # load data reshaped
 load('./STModel-Data/out_files/transitions_r1.rdata')
 
-# Load SDM grid
+# Load spatial data
 SDMClimate_grid <- read.csv('./STModel-Data/out_files/SDMClimate_grid.csv')
+load("./data/shapeFiles_forcrop.rdata")
+
+#Load functions
+source("grid_visu_fcts.r")
+
+###########################################################
+##### Preparing Data
 
 # Remove climatic spaces outside of the SDM calibration
 selectedVars = c("annual_mean_temp", "tot_annual_pp", "mean_diurnal_range", "pp_warmest_quarter", "pp_wettest_period", "mean_temp_wettest_quarter", "mean_temp_driest_quarter")
@@ -47,6 +53,8 @@ for (i in 3:(ncol(sdm_grid))){
     sdm_grid[,i] <- (sdm_grid[,i]-vars.means[col])/vars.sd[col]
 }
 
+###########################################################
+##### Projections
 
 # Class: Grid prediction and Reshaping
 
@@ -76,73 +84,17 @@ df.pred$prob <-factor(df.pred$prob ,levels=rev(levels(df.pred$prob)))
 # Save prob Projs
 save(pred,file="./data/prob_sdm_proj.rdata")
 
-
-# Crop lakes and countries on the area
-lakes <- readOGR(dsn="./STModel-Data/out_files/shapefiles/",layer="lakes_stm_area")
-countries <- readOGR(dsn="./STModel-Data/out_files/shapefiles/",layer="countries_stm_area")
-
-ext <- extent(c(range(sdm_grid$lon),range(sdm_grid$lat)))
-
-lakes <- crop(lakes,ext)
-countries <- crop(countries,ext)
-
-df.countries <- fortify(countries)
-df.lakes <- fortify(lakes)
-
-
 ###########################################################################
 ## Maps
 
 ## set ggplot2 theme
 theme_set(theme_grey(base_size=14))
 
-cols <- brewer.pal(11,"Spectral")
-
-map <- ggplot(df.pred) +
-        geom_polygon(data = df.countries, aes(x = long, y = lat, group = group),fill="grey80",colour="grey50",size=0.1) +
-        geom_raster(aes(lon,lat,fill=prob)) +
-        facet_grid(state~mod)+
-        scale_fill_manual(values=cols,name="Probability") +
-        geom_polygon(data = subset(df.lakes,hole==FALSE),
-            aes(x = long, y = lat, group = group),fill="lightskyblue",
-            colour="dodgerblue4",size=0.1) +
-        scale_x_continuous(expand=c(0,0))+
-        scale_y_continuous(expand=c(0,0))+
-        coord_equal() +
-        xlab("Longitude") + ylab("Latitude")
-
-ggsave(map,file="./figures/proj_SDM.jpg",width=8,height=10)
-
-
-map <- ggplot(subset(df.pred,mod=='RF')) +
-        geom_polygon(data = df.countries, aes(x = long, y = lat, group = group),fill="grey80",colour="grey50",size=0.1) +
-        geom_raster(aes(lon,lat,fill=prob)) +
-        facet_wrap(~state)+
-        scale_fill_manual(values=cols,name="Probability") +
-        geom_polygon(data = subset(df.lakes,hole==FALSE),
-            aes(x = long, y = lat, group = group),fill="lightskyblue",
-            colour="dodgerblue4",size=0.1) +
-        scale_x_continuous(expand=c(0,0))+
-        scale_y_continuous(expand=c(0,0))+
-        coord_equal() +
-        xlab("Longitude") + ylab("Latitude")
-
-ggsave(map,file="./figures/RF_proj_SDM.jpg",width=15,height=10)
-
-map <- ggplot(subset(df.pred,mod=='MN')) +
-        geom_polygon(data = df.countries, aes(x = long, y = lat, group = group),fill="grey80",colour="grey50",size=0.1) +
-        geom_raster(aes(lon,lat,fill=prob)) +
-        facet_wrap(~state)+
-        scale_fill_manual(values=cols,name="Probability") +
-        geom_polygon(data = subset(df.lakes,hole==FALSE),
-            aes(x = long, y = lat, group = group),fill="lightskyblue",
-            colour="dodgerblue4",size=0.1) +
-        scale_x_continuous(expand=c(0,0))+
-        scale_y_continuous(expand=c(0,0))+
-        coord_equal() +
-        xlab("Longitude") + ylab("Latitude")
-
+map <- visu_prob_map(subset(df.pred,mod=="MN"),"Spectral","MN Projection","Probability")
 ggsave(map,file="./figures/MN_proj_SDM.jpg",width=15,height=10)
+
+map <- visu_prob_map(subset(df.pred,mod=="RF"),"Spectral","RF Projection","Probability")
+ggsave(map,file="./figures/RF_proj_SDM.jpg",width=15,height=10)
 
 ################################################
 ###### Explore SDMs responses to climate variables

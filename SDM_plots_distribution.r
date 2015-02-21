@@ -8,6 +8,7 @@ require("reshape2")
 
 ## load data
 load("./STModel-Data/out_files/transitions_r1.rdata")
+source("./fcts_grid_visu.r")
 
 ## Filtered unsued plots and columns
 plots <-subset(stateData,stateData$annual_mean_temp<=10 & stateData$state != "U")
@@ -16,6 +17,7 @@ plots_coords <- plots[,c(4,3)]
 # Get spatial points
 spdf <- SpatialPoints(coords=plots_coords,
     proj4string = CRS("+proj=longlat +datum=WGS84 +no_defs"))
+spdf <- spTransform(spdf,CRS("+proj=longlat +ellps=GRS80 +datum=NAD83 +no_defs"))
 
 # Create raster, count and return obj to df
 rast <- raster(nrow=75,ncol=75,extent(spdf))
@@ -33,6 +35,9 @@ ext <- extent(c(range(plots$lon),range(plots$lat)))
 lakes <- crop(lakes,ext)
 countries <- crop(countries,ext)
 
+lakes <- spTransform(lakes,CRS('+proj=longlat +ellps=GRS80 +datum=NAD83 +no_defs'))
+countries <- spTransform(countries,CRS('+proj=longlat +ellps=GRS80 +datum=NAD83 +no_defs'))
+
 df.countries <- fortify(countries)
 df.lakes <- fortify(lakes)
 
@@ -48,13 +53,14 @@ plots_distrib_allyr <- ggplot(df.count,aes(x=x,y=y,fill=class)) +
         geom_raster(alpha=0.7) +
         scale_fill_manual(values=cols,name="Count") +
         geom_polygon(data = subset(df.lakes,hole==FALSE),
-            aes(x = long, y = lat, group = group),fill="lightskyblue",
+            aes(x = long, y = lat, group = group),fill="light blue",
             colour="dodgerblue4",size=0.1) +
         scale_x_continuous(expand=c(0,0))+
         scale_y_continuous(expand=c(0,0))+
         coord_equal() +
         xlab("Longitude") + ylab("Latitude")+
-        ggtitle("SDM Calibration \n Plots distribution for all years")
+        ggtitle("SDM Calibration \n Plots distribution for all years")+
+        theme_df
 
 ggsave(plots_distrib_allyr,file="./figures/distrib_plots_allyrs.jpg",width=8,height=6)
 
@@ -96,12 +102,13 @@ plots_distrib_by_decades <- ggplot(df.decades,aes(x=x,y=y,fill=count)) +
         geom_raster(alpha=0.7) +
         scale_fill_manual(values=cols,name="Count") +
         geom_polygon(data = subset(df.lakes,hole==FALSE),
-            aes(x = long, y = lat, group = group),fill="lightskyblue",
+            aes(x = long, y = lat, group = group),fill="light blue",
             colour="dodgerblue4",size=0.1) +
         scale_x_continuous(expand=c(0,0))+
         scale_y_continuous(expand=c(0,0))+
         coord_equal() +
         xlab("Longitude") + ylab("Latitude") +
-        ggtitle("SDM Calibration \n Plots distribution by decades")
+        ggtitle("SDM Calibration \n Plots distribution by decades")+
+        theme_df
 
 ggsave(plots_distrib_by_decades,file="./figures/distrib_plots_by_decades.jpg",width=12,height=6)
