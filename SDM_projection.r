@@ -26,7 +26,7 @@ SDMClimate_grid <- read.csv('./STModel-Data/out_files/SDMClimate_grid.csv')
 load("./data/shapeFiles_forcrop.rdata")
 
 #Load functions
-source("grid_visu_fcts.r")
+source("fcts_grid_visu.r")
 
 ###########################################################
 ##### Preparing Data
@@ -91,10 +91,10 @@ save(pred,file="./data/prob_sdm_proj.rdata")
 theme_set(theme_grey(base_size=14))
 
 map <- visu_prob_map(subset(df.pred,mod=="MN"),"Spectral","MN Projection","Probability")
-ggsave(map,file="./figures/MN_proj_SDM.jpg",width=15,height=10)
+ggsave(map,file="./figures/MN_proj_SDM.pdf",width=10,height=7.5)
 
 map <- visu_prob_map(subset(df.pred,mod=="RF"),"Spectral","RF Projection","Probability")
-ggsave(map,file="./figures/RF_proj_SDM.jpg",width=15,height=10)
+ggsave(map,file="./figures/RF_proj_SDM.jpg",width=10,height=7.5)
 
 ################################################
 ###### Explore SDMs responses to climate variables

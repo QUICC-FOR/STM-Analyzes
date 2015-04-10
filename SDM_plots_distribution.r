@@ -112,3 +112,46 @@ plots_distrib_by_decades <- ggplot(df.decades,aes(x=x,y=y,fill=count)) +
         theme_df
 
 ggsave(plots_distrib_by_decades,file="./figures/distrib_plots_by_decades.jpg",width=12,height=6)
+
+##### Bin maps by state
+
+plots <-subset(stateData,stateData$annual_mean_temp<=10 & stateData$state != "U")
+plots_coords_state <- plots[,c(4,3,9)]
+
+# Get spatial points
+spdf <- SpatialPointsDataFrame(coords=plots_coords_state[,1:2],data=plots_coords_state,proj4string = CRS("+proj=longlat +datum=WGS84 +no_defs"))
+spdf <- spTransform(spdf,CRS("+proj=longlat +ellps=GRS80 +datum=NAD83 +no_defs"))
+
+# Create raster, count and return obj to df
+rast <- raster(nrow=75,ncol=75,extent(spdf))
+rast_B <- rasterize(as(subset(spdf,state=='B'),"SpatialPoints"),rast,fun='count')
+rast_M <- rasterize(as(subset(spdf,state=='M'),"SpatialPoints"),rast,fun='count')
+rast_T <- rasterize(as(subset(spdf,state=='T'),"SpatialPoints"),rast,fun='count')
+st <- stack(rast_T,rast_B,rast_M)
+names(st) <- c("T","B","M")
+
+dfstate <- as.data.frame(st,xy=TRUE)
+dfstate<-melt(dfstate,id=c("x","y"),value.name="count",variable.name="state")
+dfstate[dfstate$count < 10 & !is.na(dfstate$count), "count" ] <- NA
+
+dfstate$count <- cut(dfstate$count ,c(10, 50, 100, 200, 300 ,400, 500, 800))
+dfstate$state <- factor(dfstate$state,labels=c("Temperate","Boreal","Mixed"))
+
+cols <- brewer.pal(6,"YlOrBr")
+distrib_state <- ggplot(dfstate,aes(x=x,y=y,fill=count)) + facet_wrap(~state,ncol=1) +
+        geom_polygon(data = df.countries, aes(x = long, y = lat, group = group),fill="grey80",colour="grey50",size=0.1) +
+        geom_raster(alpha=0.7) +
+        scale_fill_manual(values=cols,name="Number of plots") +
+        geom_polygon(data = subset(df.lakes,hole==FALSE),
+            aes(x = long, y = lat, group = group),fill="light blue",
+            colour="dodgerblue4",size=0.1) +
+        scale_x_continuous(expand=c(0,0))+
+        scale_y_continuous(expand=c(0,0))+
+        coord_equal() +
+        xlab("Longitude") + ylab("Latitude")+
+        theme_df
+
+
+tiff("./figures/distrib_state.tiff", width = 5, height = 8, units = 'in', res = 300)
+print(distrib_state)
+dev.off()
