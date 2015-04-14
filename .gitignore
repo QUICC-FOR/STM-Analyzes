@@ -3,5 +3,8 @@ clim_maps.r
 
 # Data
 data/*
+outputs/*
+figures/*
 out_files/*
 temp_files/*
+pars/*

@@ -1,1 +1,0 @@
-../../STModel-Calibration/estimated_params/GenSA_initForFit_rf_0.334_less5y.txt
