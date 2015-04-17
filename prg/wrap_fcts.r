@@ -132,9 +132,7 @@ getClimFigs <- function(simu_out){
 
 runGeoSimu <- function(params=params,timeSteps=timeSteps,transProb=transProb,writeStep=writeStep,disturb=disturb,clim_file=clim_file,land_file=land_file){
 
-    init_grid <- read.csv(inland)
-    names(init_grid) <- c("x","y","state")
-    geoClimGrid <- read.csv(clim_file)
+    load("./data/inputGeoSimu.rdata")
 
     x=max(init_grid$x)+1
     y=max(init_grid$y)+1
