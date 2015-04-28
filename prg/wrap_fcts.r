@@ -7,7 +7,7 @@
 
 stmodel <- function(params=params,inland=inland,outland=outland,x=x,y=y,a=a,b=b,clim_file=clim_file,writeStep=writeStep,disturb=disturb,transProb=transProb){
 
-    stmodel <- paste("./prg/stmodel -x",  x ,"-y",  y ,"-a",  a, "-b",  b, "-s -c", clim_file, " -p",paste("./pars/",params,sep=""),"-i",inland, "-t", writeStep, "-d", disturb,"-e",transProb, ">", outland, "2>/dev/null")
+    stmodel <- paste("./prg/stmodel -x",  x ,"-y",  y ,"-a",  a, "-b",  b, "-s -c", clim_file, " -p",paste("./pars/",params,sep=""),"-i",inland, "-t", writeStep, "-d", disturb,"-e",transProb, ">", outland)
 
     system(stmodel)
 }
@@ -195,4 +195,21 @@ runGeoSimu <- function(params=params,timeSteps=timeSteps,transProb=transProb,wri
 
     return(1)
 
+}
+
+idToState <- function(id){
+    id[id==1] <- "B" 
+    id[id==2] <- "T" 
+    id[id==3] <- "M" 
+    id[id==4] <- "R" 
+    id[which(is.na(id))] <- 0
+    return(as.factor(id))
+}
+
+stateToId <- function(state){
+    state[state=="B"] <- 1 
+    state[state=="T"] <- 2 
+    state[state=="M"] <- 3 
+    state[state=="R"] <- 4 
+    return(as.numeric(state))
 }

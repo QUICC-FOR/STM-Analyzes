@@ -14,13 +14,22 @@ source("./prg/wrap_fcts.r")
 
 #### Set List of params and constants
 
-ls_pars <- c("GenSA_initForFit_rf_0.3315y.txt","GenSA_initForFit_rf_0.3315y2.txt","GenSA_initForFit_rf_0.3322.txt","GenSA_initForFit_rf_0.3325y.txt","GenSA_initForFit_rf_0.333.txt","GenSA_initForFit_rf_0.3332.txt","GenSA_initForFit_rf_0.3335y.txt","GenSA_initForFit_rf_0.3335y2.txt","GenSA_initForFit_rf_0.3345y.txt","GenSA_initForFit_rf_0.335.txt","GenSA_initForFit_rf_0.3352.txt","GenSA_initForFit_rf_0.3355y.txt","GenSA_initForFit_rf_0.3365y.txt","GenSA_initForFit_rf_0.3375y.txt","GenSA_initForFit_rf_0.3385y.txt","GenSA_initForFit_rf_0.339.txt","GenSA_initForFit_rf_0.3392.txt","GenSA_initForFit_rf_0.3395y.txt")
+ls_pars <- c(
+"GenSA_rf_0.331_3_1y.txt",
+"GenSA_rf_0.332_3_1y.txt",
+"GenSA_rf_0.333_3_1y.txt",
+"GenSA_rf_0.334_3_1y.txt",
+"GenSA_rf_0.335_3_1y.txt",
+"GenSA_rf_0.336_3_1y.txt",
+"GenSA_rf_0.337_3_1y.txt",
+"GenSA_rf_0.338_3_1y.txt",
+"GenSA_rf_0.339_3_1y.txt")
 
 
 clim_file="./data/init_clim.csv"
 land_file="./data/init_M_land.csv"
 grain=100
-timeSteps=2500
+timeSteps=12500
 
 #### Generate Input files
 ##############################################################################################
