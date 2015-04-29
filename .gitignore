@@ -8,3 +8,6 @@ figures/*
 out_files/*
 temp_files/*
 pars/*
+/simu_cc/input_clim/*
+*.txt
+*.csv

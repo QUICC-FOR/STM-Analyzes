@@ -202,8 +202,8 @@ idToState <- function(id){
     id[id==2] <- "T" 
     id[id==3] <- "M" 
     id[id==4] <- "R" 
-    id[which(is.na(id))] <- 0
-    return(as.factor(id))
+    id[id==0] <- NA 
+    return(id)
 }
 
 stateToId <- function(state){
@@ -211,5 +211,6 @@ stateToId <- function(state){
     state[state=="T"] <- 2 
     state[state=="M"] <- 3 
     state[state=="R"] <- 4 
+    state[which(is.na(state))] <- 0
     return(as.numeric(state))
 }

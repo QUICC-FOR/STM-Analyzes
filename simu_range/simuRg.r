@@ -1,6 +1,6 @@
 ## Prep 
-setwd("~/Documents/GitHub/STModel-Analyzes/")
 rm(list=ls())
+setwd("~/Documents/GitHub/STModel-Analyzes/")
 system("rm temp_files/*")
 
 ### set workspace 
@@ -26,6 +26,8 @@ load("./outputs/GEO_GenSA_rf_0338_3_5y_tp_500.rdata")
 init_land <- st_rs[[nlayers(st_rs)]]
 rm(st_rs)
 init_land <- crop(init_land,ext_study_area)
+init_land <- projectRaster(init_land,crs=CRS("+proj=lcc +lat_1=60 +lat_2=46 +lat_0=44 +lon_0=-68.5 +x_0=0 +y_0=0 +ellps=clrk66 +units=m +no_defs"),method='ngb')
+
 
 ### Plot initial landscape
 land <- as.data.frame(init_land,xy=TRUE)
@@ -48,7 +50,7 @@ land$state <- as.character(land$state)
 
 
 # # Write input 
-# write.table(land[,c("x","y","state")],file="./simu_range/init_70-00_landRgGrid.csv",sep=",",quote=FALSE,col.names=FALSE,row.names=FALSE)
+#write.table(land[,c("x","y","state")],file="./simu_range/init_70-00_landRgGrid.csv",sep=",",quote=FALSE,col.names=FALSE,row.names=FALSE)
 
 
 ### Init clim
@@ -62,7 +64,8 @@ climRg <- subset(climRg,tot_annual_pp>=720&tot_annual_pp<=1200)
 
 # Proj climRg 
 coordinates(climRg) <- ~lon+lat
-proj4string(climRg) <- CRS("+init=epsg:4326 +proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs +towgs84=0,0,0")
+proj4string(climRg) <- CRS("+init=epsg:4269 +proj=longlat +ellps=GRS80 +datum=NAD83 +no_defs +towgs84=0,0,0")
+
 
 # Set as raster
 climRg_tp <- climRg[1]
@@ -72,6 +75,9 @@ climRg_pp <- raster(climRg_pp)
 climRg_tp <- raster(climRg_tp)
 NAvalue(climRg_pp) <- NAvalue(climRg_tp) <- -9999
 
+climRg_pp <- projectRaster(climRg_pp,crs=CRS("+proj=lcc +lat_1=60 +lat_2=46 +lat_0=44 +lon_0=-68.5 +x_0=0 +y_0=0 +ellps=clrk66 +units=m +no_defs"))
+climRg_tp <- projectRaster(climRg_tp,crs=CRS("+proj=lcc +lat_1=60 +lat_2=46 +lat_0=44 +lon_0=-68.5 +x_0=0 +y_0=0 +ellps=clrk66 +units=m +no_defs"))
+
 ### Resample on area
 climRg_tp <- resample(climRg_tp,init_land)
 climRg_pp <- resample(climRg_pp,init_land)
@@ -79,7 +85,7 @@ climRg_pp <- resample(climRg_pp,init_land)
 ###### Comment to get real climate
 ####################################################################
 
-# # Get proj and ext
+# # # Get proj and ext
 # ext <- extent(climRg_pp)
 # proj <- proj4string(climRg_pp)
 
@@ -108,6 +114,7 @@ climRg_pp <- resample(climRg_pp,init_land)
 ####################################################################
 climRg <- stack(climRg_tp,climRg_pp)
 
+
 ### Set to STM grid 
 climRgGrid <- as.data.frame(climRg,xy=TRUE)
 climRgGrid$x <- as.numeric(as.factor(climRgGrid$x)) -1
@@ -119,7 +126,7 @@ climRgGrid[is.na(climRgGrid$annual_mean_temp),"tot_annual_pp"] <- NA
 climRgGrid[is.na(climRgGrid$tot_annual_pp),"annual_mean_temp"] <- NA
 
 ### Increase temp
-climRgGrid[,'annual_mean_temp'] <- climRgGrid[,'annual_mean_temp'] + 2
+climRgGrid[,'annual_mean_temp'] <- climRgGrid[,'annual_mean_temp']
 
 ### Scale climRgGrid
 load("./data/scale_info.Robj")
@@ -133,14 +140,11 @@ climRgGrid[is.na(climRgGrid$annual_mean_temp),c("annual_mean_temp","tot_annual_p
 names(climRgGrid)[3:4] <- c("env1","env2")
 climRgGrid$year <- 0
 climRgGrid <- climRgGrid[,c("x","y","year","env1","env2")]
-write.csv(climRgGrid,"./simu_range/init_realClim_wo_cc.csv",row.names=FALSE)
+#write.csv(climRgGrid,"./simu_range/init_clim_wo_cc.csv",row.names=FALSE)
 
 
 #####################################################
 ### Get land at eq with new clim
-
-system("./prg/stmodel -x 27 -y 587 -a 27 -b 587 -s -c ./simu_range/init_fakeClim_wo_cc.csv -p ./pars/GenSA_rf_0.338_3_5y.txt -i ./simu_range/init_70-00_landRgGrid.csv -t 1000 -d 0 -e 1 > ./simu_range/init_eq_landRgGrid.csv")
-
 
 ### Run model
 
@@ -151,16 +155,20 @@ y <- max(land$y)+1
 a <- max(climRgGrid$x)+1
 b <- max(climRgGrid$y)+1
 pars<-"GenSA_rf_0.338_3_5y.txt"
-clim_file <- "./simu_range/init_fakeClim_wt_cc.csv"
-land_file <-"./simu_range/init_eq_landRgGrid.csv"
-writeStep <- c(10,20,80,100,200,500,1000)
-nrep <- seq(1,10,1)
+clim_wt_cc <- "./simu_range/init_clim_wt_cc.csv"
+clim_wo_cc <- "./simu_range/init_clim_wo_cc.csv"
+writeStep <- c(10,20,80,100,200,500,1000,5000)
+nrep <- 10
 disturb <- 0
 transProb <- 1
+land_file <-"./simu_range/init_70-00_landRgGrid.csv"
 
-for (j in 1:length(nrep)){
+
+for (j in 1:nrep){
+    stmodel(params=pars,inland=land_file,outland=paste("./temp_files/",j,"_rp_0_step.txt",sep=""),disturb=disturb,x=x,y=y,a=a,b=b,clim_file=clim_wo_cc,writeStep=1000,transProb=transProb)
+
     for (i in 1:length(writeStep)){
-        stmodel(params=pars,inland=land_file,outland=paste("./temp_files/",nrep[j],"_rp_",writeStep[i],"_ts_eqland_with_cc_",pars,sep=""),disturb=disturb,x=x,y=y,a=a,b=b,clim_file=clim_file,writeStep=writeStep[i],transProb=transProb)
+        stmodel(params=pars,inland=paste("./temp_files/",j,"_rp_0_step.txt",sep=""),outland=paste("./temp_files/",j,"_rp_",writeStep[i],"_step.txt",sep=""),disturb=disturb,x=x,y=y,a=a,b=b,clim_file=clim_wt_cc ,writeStep=writeStep[i],transProb=transProb)
     }
 }
 
@@ -180,20 +188,20 @@ for (i in 1:length(path)){
     predland$state <- stateToId(as.character(predland$state))
     predland <- acast(predland,rev(y)~x,value.var = "state")
     predland <- raster(predland)
-    proj4string(predland) <- CRS("+init=epsg:4326 +proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs +towgs84=0,0,0")
+    proj4string(predland) <- CRS("+proj=lcc +lat_1=60 +lat_2=46 +lat_0=44 +lon_0=-68.5 +x_0=0 +y_0=0 +ellps=clrk66 +units=m +no_defs")
     extent(predland) <- extent(climRg)
     names(predland) <- paste('Landscape after:',df_out[i,2],"- rep:",df_out[i,3])
     ls_rs[[i]] <- predland
 }
 
 st_rs <- stack(ls_rs)
-save(st_rs,file=paste("./outputs/RG_eqLand_fakeClim_rep_",length(nrep),"_",strsplit(pars, "\\.")[[1]][1],"_ts_",min(writeStep),"_",max(writeStep),".rdata",sep=""))
-system("rm temp_files/*")
+#save(st_rs,file=paste("./outputs/RG_realClim_rep_",length(nrep),"_",strsplit(pars, "\\.")[[1]][1],"_ts_",min(writeStep),"_",max(writeStep),".rdata",sep=""))
+#system("rm temp_files/*")
 
 
 ### Figs
 ### Load stack and clim
-#load('./outputs/RG_rep_10_GenSA_rf_0_ts_10_5000.rdata')
+load('./outputs/RG_realClim_rep_1_GenSA_rf_0_ts_10_5000.rdata')
 simu_grids <- as.data.frame(st_rs,xy=TRUE,na.rm=TRUE)
 simu_grids <- melt(simu_grids,id=c("x","y"),value.name="state",variable.name="step")
 
@@ -205,16 +213,18 @@ vec_ts <-  str_extract(vec_chr[,1],"[[:digit:]]+")
 simu_grids$step <- vec_ts
 simu_grids$rep <- vec_rep
 simu_grids$step <- as.factor(simu_grids$step)
+simu_grids$step <- factor(simu_grids$step,levels=as.numeric(levels(simu_grids$step))[order(as.numeric(levels(simu_grids$step)))])
 simu_grids$rep <- as.factor(simu_grids$rep)
 simu_grids$state <- idToState(simu_grids$state)
 simu_grids$state <- as.factor(simu_grids$state)
+simu_grids$state <- droplevels(simu_grids$state)
+
 
 simumap <- ggplot(subset(simu_grids,rep==1),aes(y=x,x=y,fill=state)) +
     geom_raster() + 
     facet_wrap(~step,ncol=1)+
     scale_fill_manual(values=pal_state) +
-    theme_df +
     scale_x_continuous(expand=c(0,0))+
     scale_y_continuous(expand=c(0,0))+
     coord_equal() +
-    xlab("Longitude") + ylab("Latitude")
+    xlab("Latitude") + ylab("Longitude")
