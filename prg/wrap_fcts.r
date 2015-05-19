@@ -5,11 +5,18 @@
 #### Function to rebuild string 
 ################################################################################################
 
-stmodel <- function(params=params,inland=inland,outland=outland,x=x,y=y,a=a,b=b,clim_file=clim_file,writeStep=writeStep,disturb=disturb,transProb=transProb){
+stmodel <- function(params=params,inland=inland,outland=outland,x=x,y=y,a=a,b=b,clim_file=clim_file,writeStep=writeStep,disturb=disturb,transProb=transProb,const_clim=TRUE){
 
-    stmodel <- paste("./prg/stmodel -x",  x ,"-y",  y ,"-a",  a, "-b",  b, "-s -c", clim_file, " -p",paste("./pars/",params,sep=""),"-i",inland, "-t", writeStep, "-d", disturb,"-e",transProb, ">", outland)
+
+    stmodel <- paste("./prg/stmodel -x",  x ,"-y",  y ,"-a",  a, "-b",  b, "-s -c", clim_file, "-p",paste("./pars/",params,sep=""),"-i",inland, "-t", writeStep, "-d", disturb,"-e",transProb, ">", outland)
+
+    if(const_clim == FALSE){
+    stmodel <- paste("./prg/stmodel -x",  x ,"-y",  y ,"-a",  a, "-b",  b, " -c", clim_file, "-p",paste("./pars/",params,sep=""),"-i",inland, "-t", writeStep, "-d", disturb,"-e",transProb, ">", outland)
+
+    }
 
     system(stmodel)
+
 }
 
 ##########################################################################################
@@ -198,6 +205,9 @@ runGeoSimu <- function(params=params,timeSteps=timeSteps,transProb=transProb,wri
 }
 
 idToState <- function(id){
+
+    id <- as.numeric(id)
+
     id[id==1] <- "B" 
     id[id==2] <- "T" 
     id[id==3] <- "M" 
@@ -207,6 +217,9 @@ idToState <- function(id){
 }
 
 stateToId <- function(state){
+
+    state <- as.character(state)
+
     state[state=="B"] <- 1 
     state[state=="T"] <- 2 
     state[state=="M"] <- 3 

@@ -126,7 +126,7 @@ climRgGrid[is.na(climRgGrid$annual_mean_temp),"tot_annual_pp"] <- NA
 climRgGrid[is.na(climRgGrid$tot_annual_pp),"annual_mean_temp"] <- NA
 
 ### Increase temp
-climRgGrid[,'annual_mean_temp'] <- climRgGrid[,'annual_mean_temp']
+climRgGrid[,'annual_mean_temp'] <- climRgGrid[,'annual_mean_temp'] + 4
 
 ### Scale climRgGrid
 load("./data/scale_info.Robj")
@@ -140,7 +140,7 @@ climRgGrid[is.na(climRgGrid$annual_mean_temp),c("annual_mean_temp","tot_annual_p
 names(climRgGrid)[3:4] <- c("env1","env2")
 climRgGrid$year <- 0
 climRgGrid <- climRgGrid[,c("x","y","year","env1","env2")]
-#write.csv(climRgGrid,"./simu_range/init_clim_wo_cc.csv",row.names=FALSE)
+write.csv(climRgGrid,"./simu_range/init_clim_wt_cc.csv",row.names=FALSE)
 
 
 #####################################################
@@ -157,7 +157,7 @@ b <- max(climRgGrid$y)+1
 pars<-"GenSA_rf_0.338_3_5y.txt"
 clim_wt_cc <- "./simu_range/init_clim_wt_cc.csv"
 clim_wo_cc <- "./simu_range/init_clim_wo_cc.csv"
-writeStep <- c(10,20,80,100,200,500,1000,5000)
+writeStep <- c(10,20,80,100,200,500,1000,5000,6000,7000,8000)
 nrep <- 10
 disturb <- 0
 transProb <- 1
@@ -195,13 +195,13 @@ for (i in 1:length(path)){
 }
 
 st_rs <- stack(ls_rs)
-#save(st_rs,file=paste("./outputs/RG_realClim_rep_",length(nrep),"_",strsplit(pars, "\\.")[[1]][1],"_ts_",min(writeStep),"_",max(writeStep),".rdata",sep=""))
-#system("rm temp_files/*")
+save(st_rs,file=paste("./outputs/RG_realClim_cc4_rep_",nrep,"_",strsplit(pars, "\\.")[[1]][1],"_ts_",min(writeStep),"_",max(writeStep),".rdata",sep=""))
+system("rm temp_files/*")
 
 
 ### Figs
 ### Load stack and clim
-load('./outputs/RG_realClim_rep_1_GenSA_rf_0_ts_10_5000.rdata')
+load('./outputs/RG_realClim_rep_1_GenSA_rf_0_ts_10_10000.rdata')
 simu_grids <- as.data.frame(st_rs,xy=TRUE,na.rm=TRUE)
 simu_grids <- melt(simu_grids,id=c("x","y"),value.name="state",variable.name="step")
 

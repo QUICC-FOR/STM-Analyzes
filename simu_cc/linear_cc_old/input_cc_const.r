@@ -10,7 +10,7 @@ load("./data/scale_info.Robj")
 
 clim_cc$env1 <- clim_cc$env1 * vars.sd['annual_mean_temp'] + vars.means['annual_mean_temp']
 clim_cc$year <- clim_cc$year + 1
-inc <- 2/20
+inc <- 4/20
 ls_out <- list()
 
 for (i in 1:20){
@@ -26,7 +26,7 @@ futclim <- do.call(rbind,ls_out)
 futclim$year <- futclim$year-1
 futclim[is.na(futclim$env1),c("env1","env2")] <- -9999
 
-write.csv(futclim,"./data/init_futclim.csv",row.names=FALSE)
+write.csv(futclim,"./simu_cc/linear_cc_old/init_fut_clim.csv",row.names=FALSE)
 
 
 #### Prep landscape at the equilibrium
@@ -49,4 +49,4 @@ grid$y <- as.numeric(as.factor(grid$lat))-1
 
 init_grid <- grid[,c("x","y","state")]
 
-write.table(init_grid,"./data/init_fut_land.csv",quote=FALSE,sep=",",row.names=FALSE,col.names=FALSE)
+write.table(init_grid,"./simu_cc/linear_cc_old/init_fut_land.csv",quote=FALSE,sep=",",row.names=FALSE,col.names=FALSE)
